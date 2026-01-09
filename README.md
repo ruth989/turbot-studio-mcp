@@ -33,7 +33,7 @@ Create a new Supabase project and run the migrations in order:
 
 ```bash
 # Clone for migrations
-git clone https://github.com/ruthkaufman/turbot-studio.git
+git clone https://github.com/ruth989/turbot-studio-mcp.git
 cd turbot-studio/supabase/migrations
 
 # Run each migration in Supabase SQL Editor:
@@ -187,7 +187,7 @@ Claude: Let me create a workspace and start thinking through this systematically
 ## Development
 
 ```bash
-git clone https://github.com/ruthkaufman/turbot-studio.git
+git clone https://github.com/ruth989/turbot-studio-mcp.git
 cd turbot-studio
 npm install
 cp .env.example .env
@@ -202,4 +202,4 @@ MIT
 
 ## Contributing
 
-Issues and PRs welcome at [github.com/ruthkaufman/turbot-studio](https://github.com/ruthkaufman/turbot-studio)
+Issues and PRs welcome at [github.com/ruth989/turbot-studio-mcp](https://github.com/ruth989/turbot-studio-mcp)
