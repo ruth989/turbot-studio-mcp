@@ -1,0 +1,56 @@
+{
+  "name": "@turbot-studio/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for Double Diamond design thinking methodology - helps engineers think through what to build",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "turbot-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    ".env.example"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "design-thinking",
+    "double-diamond",
+    "ai",
+    "claude",
+    "anthropic",
+    "product-strategy",
+    "ux-research"
+  ],
+  "author": "Ruth Kaufman",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruthkaufman/turbot-mcp.git"
+  },
+  "homepage": "https://github.com/ruthkaufman/turbot-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/ruthkaufman/turbot-mcp/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}

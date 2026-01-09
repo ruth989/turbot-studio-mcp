@@ -1,0 +1,37 @@
+# Source files (dist is published)
+src/
+tsconfig.json
+
+# Dev files
+scripts/
+.claude/
+*.md
+!README.md
+
+# Environment and secrets
+.env
+.env.local
+
+# Planning docs
+*-plan.md
+*-exploration.md
+
+# Supabase (users run migrations manually)
+supabase/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+*.test.ts
+*.spec.ts

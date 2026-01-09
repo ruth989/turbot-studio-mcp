@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+
+# Dev scripts
+scripts/
+
+# Planning docs
+*-plan.md
+*-exploration.md
+
+# Claude
+.claude/
+
+# Supabase temp
+supabase/.temp/
