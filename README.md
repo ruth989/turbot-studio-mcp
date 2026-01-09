@@ -33,8 +33,8 @@ Create a new Supabase project and run the migrations in order:
 
 ```bash
 # Clone for migrations
-git clone https://github.com/ruthkaufman/turbot-mcp.git
-cd turbot-mcp/supabase/migrations
+git clone https://github.com/ruthkaufman/turbot-studio.git
+cd turbot-studio/supabase/migrations
 
 # Run each migration in Supabase SQL Editor:
 # 001_initial_schema.sql
@@ -62,7 +62,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "turbot": {
-      "command": "turbot-mcp",
+      "command": "turbot-studio",
       "env": {
         "SUPABASE_URL": "https://your-project.supabase.co",
         "SUPABASE_ANON_KEY": "your-anon-key",
@@ -187,8 +187,8 @@ Claude: Let me create a workspace and start thinking through this systematically
 ## Development
 
 ```bash
-git clone https://github.com/ruthkaufman/turbot-mcp.git
-cd turbot-mcp
+git clone https://github.com/ruthkaufman/turbot-studio.git
+cd turbot-studio
 npm install
 cp .env.example .env
 # Edit .env with your credentials
@@ -202,4 +202,4 @@ MIT
 
 ## Contributing
 
-Issues and PRs welcome at [github.com/ruthkaufman/turbot-mcp](https://github.com/ruthkaufman/turbot-mcp)
+Issues and PRs welcome at [github.com/ruthkaufman/turbot-studio](https://github.com/ruthkaufman/turbot-studio)

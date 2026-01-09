@@ -1,11 +1,11 @@
 {
   "name": "@turbot-studio/mcp-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for Double Diamond design thinking methodology - helps engineers think through what to build",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "turbot-mcp": "dist/index.js"
+    "turbot-studio": "dist/index.js"
   },
   "files": [
     "dist",
@@ -34,11 +34,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ruthkaufman/turbot-mcp.git"
+    "url": "git+https://github.com/ruthkaufman/turbot-studio-mcp.git"
   },
-  "homepage": "https://github.com/ruthkaufman/turbot-mcp#readme",
+  "homepage": "https://github.com/ruthkaufman/turbot-studio-mcp#readme",
   "bugs": {
-    "url": "https://github.com/ruthkaufman/turbot-mcp/issues"
+    "url": "https://github.com/ruthkaufman/turbot-studio-mcp/issues"
   },
   "engines": {
     "node": ">=18.0.0"
