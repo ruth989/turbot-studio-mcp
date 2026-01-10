@@ -38,10 +38,11 @@ cd turbot-studio/supabase/migrations
 
 # Run each migration in Supabase SQL Editor:
 # 001_initial_schema.sql
-# 002_outputs.sql
+# 002_workspace_isolation.sql
 # 003_notebooks.sql
 # 004_citation_count.sql
 # 005_new_output_types.sql
+# 006_companion_app_features.sql
 ```
 
 ### 3. Configure Environment
@@ -130,6 +131,18 @@ Restart Claude Desktop.
 | `turbot_notebook_note` | Add freeform notes |
 | `turbot_notebook_remove` | Remove items from notebook |
 
+### Threads & Visualization
+| Tool | Description |
+|------|-------------|
+| `turbot_thread_complete` | Mark a thread as complete |
+| `turbot_thread_view` | Get complete thread data for visualization |
+| `turbot_node_headline` | Set a headline/title for a node |
+| `turbot_node_stage` | Tag node with pipeline stage (insights, personas, vision, etc.) |
+| `turbot_pattern_create` | Create structural patterns (fork, loop, bridge, join) |
+| `turbot_iteration_create` | Create version history for a node |
+| `turbot_link_nodes` | Create cross-thread links between nodes |
+| `turbot_context_add` | Add external references and context items |
+
 ## Thinking Methods
 
 Use with `turbot_think`:
@@ -198,7 +211,7 @@ npm start
 
 ## License
 
-MIT
+[Polyform Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/) - Free for non-commercial use.
 
 ## Contributing
 
