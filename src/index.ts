@@ -82,6 +82,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: 'string',
               enum: [
                 'insight',
+                'pattern',
                 'idea',
                 'claim',
                 'assumption',
@@ -451,7 +452,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             type: {
               type: 'string',
-              enum: ['insight', 'idea', 'claim', 'assumption', 'decision', 'question', 'tension', 'principle'],
+              enum: ['insight', 'pattern', 'idea', 'claim', 'assumption', 'decision', 'question', 'tension', 'principle'],
               description: 'Filter by thought product type',
             },
             state: {
@@ -552,7 +553,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_pipeline_status',
         description:
-          'Show pipeline position in the Double Diamond methodology. Visual status of 8 stages: Research → Personas → Vision → Problems → Journeys → Concepts → Definition → Outputs.',
+          'Show pipeline position in the Double Diamond methodology. Visual status of 4 stages: Discover → Define → Develop → Deliver.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -633,8 +634,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             stage: {
               type: 'string',
-              enum: ['insights', 'personas', 'vision', 'problems', 'journeys', 'concepting', 'definition', 'handoff'],
-              description: 'Pipeline stage',
+              enum: ['discover', 'define', 'develop', 'deliver'],
+              description: 'Double Diamond pipeline stage',
             },
           },
           required: ['nodeId', 'stage'],
@@ -919,29 +920,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         .select('id')
         .eq('workspace_id', workspaceId);
 
-      // Build pipeline status
-      // Pipeline: Research → Personas → Vision → Problems → Journeys → Concepts → Definition → Outputs
-      const hasInsights = thoughtProducts?.some((tp) => tp.type === 'insight') || false;
-      const hasPersonas = (personas?.length || 0) > 0;
-      const hasVision = thoughtProducts?.some((tp) => tp.type === 'principle' || tp.content?.toLowerCase().includes('vision')) || false;
-      const hasProblems = thoughtProducts?.some((tp) => tp.type === 'tension' || tp.type === 'question') || false;
-      const hasJourneys = outputs?.some((o) => o.type === 'journey') || false;
-      const hasConcepts = thoughtProducts?.some((tp) => tp.type === 'idea') || false;
-      const hasDefinition = outputs?.some((o) => o.type === 'spec' || o.type === 'design_brief') || false;
-      const hasOutputs = (outputs?.length || 0) > 0;
+      // Build pipeline status - Double Diamond (4 stages)
+      // DISCOVER (diverge): research, insights, patterns
+      // DEFINE (converge): frame problems, validate, personas
+      // DEVELOP (diverge): ideate, concepts, journeys
+      // DELIVER (converge): specs, outputs, handoff
+      const hasDiscover = thoughtProducts?.some((tp) => tp.type === 'insight' || tp.type === 'pattern' || tp.type === 'question') || false;
+      const hasDefine = thoughtProducts?.some((tp) => tp.type === 'tension' || tp.type === 'principle' || tp.type === 'decision') || (personas?.length || 0) > 0;
+      const hasDevelop = thoughtProducts?.some((tp) => tp.type === 'idea' || tp.type === 'assumption') || outputs?.some((o) => o.type === 'journey');
+      const hasDeliver = outputs?.some((o) => o.type === 'spec' || o.type === 'design_brief' || o.type === 'feature_spec' || o.type === 'handoff_notes') || false;
 
       const pipelineStatus = [
-        hasInsights ? '●' : '○',
-        hasPersonas ? '●' : '○',
-        hasVision ? '●' : '○',
-        hasProblems ? '●' : '○',
-        hasJourneys ? '●' : '○',
-        hasConcepts ? '●' : '○',
-        hasDefinition ? '●' : '○',
-        hasOutputs ? '●' : '○',
+        hasDiscover ? '●' : '○',
+        hasDefine ? '●' : '○',
+        hasDevelop ? '●' : '○',
+        hasDeliver ? '●' : '○',
       ];
 
-      const pipelineViz = `Research ${pipelineStatus[0]} → Personas ${pipelineStatus[1]} → Vision ${pipelineStatus[2]} → Problems ${pipelineStatus[3]} → Journeys ${pipelineStatus[4]} → Concepts ${pipelineStatus[5]} → Definition ${pipelineStatus[6]} → Outputs ${pipelineStatus[7]}`;
+      const pipelineViz = `◇ DISCOVER ${pipelineStatus[0]} ─── ◇ DEFINE ${pipelineStatus[1]} ─── ◇ DEVELOP ${pipelineStatus[2]} ─── ◇ DELIVER ${pipelineStatus[3]}`;
 
       if (!thoughtProducts || thoughtProducts.length === 0) {
         return {
@@ -1006,17 +1002,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         ? `\n\n## Notebooks\n${notebooks.map((nb) => `- ${nb.name}`).join('\n')}`
         : '';
 
-      // Suggestions
+      // Suggestions based on Double Diamond progress
       const hasNotebooks = (notebooks?.length || 0) > 0;
+      const personaCount = personas?.length || 0;
       let suggestions = '\n\n## Suggested Next Steps\n';
-      if (!hasPersonas) {
-        suggestions += '1. Create personas with turbot_sim to sharpen your understanding\n';
+      if (!hasDiscover) {
+        suggestions += '1. Start discovering — use turbot_think to explore the problem space\n';
+      } else if (!hasDefine && hasDiscover) {
+        suggestions += '1. Move to Define — frame problems, validate with turbot_sim, capture decisions\n';
       } else if (assumed.length > 3) {
         suggestions += '1. Validate assumptions — use turbot_ground to check what supports them\n';
-      } else if (!hasJourneys && hasPersonas) {
-        suggestions += '1. Map a user journey with turbot_create type="journey"\n';
-      } else if (hasConcepts && !hasDefinition) {
-        suggestions += '1. Create a spec or design brief with turbot_create\n';
+      } else if (!hasDevelop && hasDefine) {
+        suggestions += '1. Start developing solutions — capture ideas, map journeys with turbot_create\n';
+      } else if (hasDevelop && !hasDeliver) {
+        suggestions += '1. Move to Deliver — create specs or design briefs with turbot_create\n';
       } else {
         suggestions += '1. Continue exploring with turbot_think\n';
       }
@@ -2370,59 +2369,44 @@ Ready to begin.
       const personaCount = personas?.length || 0;
       const outputTypes = new Set((outputs || []).map((o) => o.type));
 
-      // Determine pipeline stage completion
-      // Stage 1: Research/Insights - has insights from research
-      const hasResearch = tps.some((tp) => tp.type === 'insight' && tp.state !== 'abandoned');
-
-      // Stage 2: Personas - has created personas
-      const hasPersonas = personaCount > 0;
-
-      // Stage 3: Vision Stories - has vision outputs or principles
-      const hasVision = tps.some((tp) => tp.type === 'principle') || outputTypes.has('design_brief');
-
-      // Stage 4: Problem Framing - has identified problems/tensions
-      const hasProblems = tps.some((tp) =>
-        (tp.type === 'tension' || tp.type === 'question') && tp.state !== 'abandoned'
+      // Double Diamond: 4 stages
+      // DISCOVER (diverge): research, insights, patterns, questions
+      const hasDiscover = tps.some((tp) =>
+        (tp.type === 'insight' || tp.type === 'pattern' || tp.type === 'question') && tp.state !== 'abandoned'
       );
 
-      // Stage 5: Journey Analysis - has journey outputs
-      const hasJourneys = outputTypes.has('journey');
+      // DEFINE (converge): frame problems, personas, decisions, principles
+      const hasDefine = tps.some((tp) =>
+        (tp.type === 'tension' || tp.type === 'principle' || tp.type === 'decision') && tp.state !== 'abandoned'
+      ) || personaCount > 0;
 
-      // Stage 6: Solution Concepting - has ideas and concepts
-      const hasConcepts = tps.some((tp) =>
-        (tp.type === 'idea' || tp.type === 'claim') && tp.state !== 'abandoned'
-      );
+      // DEVELOP (diverge): ideas, concepts, journeys, assumptions to test
+      const hasDevelop = tps.some((tp) =>
+        (tp.type === 'idea' || tp.type === 'assumption' || tp.type === 'claim') && tp.state !== 'abandoned'
+      ) || outputTypes.has('journey');
 
-      // Stage 7: Solution Definition - has validated decisions
-      const hasDefinition = tps.some((tp) =>
-        tp.type === 'decision' && (tp.state === 'validated' || tp.state === 'supported')
-      );
-
-      // Stage 8: Strategic Handoff - has produced outputs
-      const hasOutputs = outputTypes.has('spec') || outputTypes.has('roadmap') ||
+      // DELIVER (converge): specs, briefs, handoff
+      const hasDeliver = outputTypes.has('spec') || outputTypes.has('design_brief') ||
+        outputTypes.has('feature_spec') || outputTypes.has('roadmap') ||
         outputTypes.has('epics') || outputTypes.has('handoff_notes');
 
-      // Build visual pipeline
+      // Build visual pipeline - Double Diamond shape
       const stages = [
-        { name: 'Research', done: hasResearch },
-        { name: 'Personas', done: hasPersonas },
-        { name: 'Vision', done: hasVision },
-        { name: 'Problems', done: hasProblems },
-        { name: 'Journeys', done: hasJourneys },
-        { name: 'Concepts', done: hasConcepts },
-        { name: 'Definition', done: hasDefinition },
-        { name: 'Outputs', done: hasOutputs },
+        { name: 'DISCOVER', done: hasDiscover, mode: 'diverge' },
+        { name: 'DEFINE', done: hasDefine, mode: 'converge' },
+        { name: 'DEVELOP', done: hasDevelop, mode: 'diverge' },
+        { name: 'DELIVER', done: hasDeliver, mode: 'converge' },
       ];
 
       const pipelineViz = stages
-        .map((s) => `${s.done ? '●' : '○'} ${s.name}`)
-        .join(' → ');
+        .map((s) => `◇ ${s.name} ${s.done ? '●' : '○'}`)
+        .join(' ─── ');
 
       // Current focus
       let currentFocus = 'Getting started';
       const activeStage = stages.find((s) => !s.done);
       if (activeStage) {
-        currentFocus = `Working toward: ${activeStage.name}`;
+        currentFocus = `Current stage: ${activeStage.name} (${activeStage.mode})`;
       } else {
         currentFocus = 'All stages complete! Ready for implementation.';
       }
@@ -2435,41 +2419,34 @@ Ready to begin.
         tp.type === 'assumption' && tp.state !== 'validated' && tp.state !== 'abandoned'
       );
 
-      const establishedList = validated.length > 0
-        ? `\n\n## What's Established\n${validated.length} validated thought products`
-        : '';
+      const validationHealth = tps.length > 0
+        ? Math.round((validated.length / tps.length) * 100)
+        : 0;
 
-      const assumedList = assumed.length > 0
-        ? `\n\n## What's Assumed\n${assumed.length} unvalidated assumptions — consider using turbot_ground`
-        : '';
+      const healthBar = '█'.repeat(Math.floor(validationHealth / 10)) + '░'.repeat(10 - Math.floor(validationHealth / 10));
+      const validationViz = `\n\n## Validation Health\n${healthBar} ${validationHealth}% grounded\n✓ ${validated.length} validated | ⚠ ${assumed.length} assumptions`;
 
-      // Suggestions based on current state
+      // Suggestions based on Double Diamond
       let suggestion = '\n\n## Suggested Next Step\n';
-      if (!hasResearch) {
-        suggestion += 'Start by exploring your problem space with `turbot_think` to surface insights.';
-      } else if (!hasPersonas) {
-        suggestion += 'Create personas with `turbot_sim` to ground your understanding in real user types.';
-      } else if (!hasProblems) {
-        suggestion += 'Frame the problem with `turbot_think` — identify tensions and key questions.';
-      } else if (!hasConcepts) {
-        suggestion += 'Generate solution concepts with `turbot_think` — explore different approaches.';
-      } else if (!hasJourneys) {
-        suggestion += 'Map user journeys with `turbot_create type="journey"` to see the full experience.';
+      if (!hasDiscover) {
+        suggestion += 'Start **discovering** — use `turbot_think` to explore and surface insights.';
+      } else if (!hasDefine) {
+        suggestion += 'Move to **define** — frame problems, create personas with `turbot_sim`, capture decisions.';
       } else if (assumed.length > 3) {
-        suggestion += 'Validate assumptions with `turbot_ground` before moving to definition.';
-      } else if (!hasDefinition) {
-        suggestion += 'Converge on decisions — use `turbot_evaluate` to assess your concepts.';
-      } else if (!hasOutputs) {
-        suggestion += 'Generate handoff outputs with `turbot_create type="epics"` or `type="roadmap"`.';
+        suggestion += 'Validate assumptions with `turbot_ground` before developing solutions.';
+      } else if (!hasDevelop) {
+        suggestion += 'Start **developing** — generate ideas, map journeys with `turbot_create type="journey"`.';
+      } else if (!hasDeliver) {
+        suggestion += 'Move to **deliver** — create specs with `turbot_create type="spec"` or `type="feature_spec"`.';
       } else {
-        suggestion += 'Pipeline complete! Review with `turbot_create type="handoff_notes"`.';
+        suggestion += 'Pipeline complete! Create handoff notes with `turbot_create type="handoff_notes"`.';
       }
 
       return {
         content: [
           {
             type: 'text',
-            text: `## Pipeline Status\n${pipelineViz}\n\n## Current Focus\n${currentFocus}${establishedList}${assumedList}${suggestion}`,
+            text: `## Double Diamond Pipeline\n${pipelineViz}\n\n## Current Focus\n${currentFocus}${validationViz}${suggestion}`,
           },
         ],
       };

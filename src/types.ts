@@ -2,6 +2,7 @@
 
 export type ThoughtProductType =
   | 'insight'
+  | 'pattern'
   | 'idea'
   | 'claim'
   | 'assumption'
@@ -46,14 +47,10 @@ export type MessageRole = 'user' | 'assistant' | 'system';
 export type ThreadState = 'active' | 'complete';
 
 export type PipelineStage =
-  | 'insights'
-  | 'personas'
-  | 'vision'
-  | 'problems'
-  | 'journeys'
-  | 'concepting'
-  | 'definition'
-  | 'handoff';
+  | 'discover'   // Diverge: research, gather insights, understand context
+  | 'define'     // Converge: synthesize, frame problems, validate
+  | 'develop'    // Diverge: ideate, explore solutions, concept
+  | 'deliver';   // Converge: refine, specify, hand off
 
 export type PatternType =
   | 'fork'
