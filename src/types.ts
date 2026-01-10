@@ -43,6 +43,29 @@ export type OutputType =
 
 export type MessageRole = 'user' | 'assistant' | 'system';
 
+export type ThreadState = 'active' | 'complete';
+
+export type PipelineStage =
+  | 'insights'
+  | 'personas'
+  | 'vision'
+  | 'problems'
+  | 'journeys'
+  | 'concepting'
+  | 'definition'
+  | 'handoff';
+
+export type PatternType =
+  | 'fork'
+  | 'bridge'
+  | 'loop'
+  | 'join'
+  | 'iteration'
+  | 'sidebar'
+  | 'link';
+
+export type ContextItemType = 'quote' | 'reference' | 'link' | 'document' | 'note';
+
 // Row types
 export interface Workspace {
   id: string;
@@ -54,6 +77,7 @@ export interface Thread {
   id: string;
   workspace_id: string;
   title: string | null;
+  state: ThreadState;
   spawned_from_node_id: string | null;
   created_at: string;
 }
@@ -63,7 +87,9 @@ export interface Node {
   thread_id: string;
   message_ids: string[];
   position: number;
+  headline: string | null;
   summary: string | null;
+  stage: PipelineStage | null;
   created_at: string;
 }
 
@@ -143,6 +169,49 @@ export interface NotebookEntry {
   added_at: string;
 }
 
+export interface NodeIteration {
+  id: string;
+  node_id: string;
+  version: number;
+  headline: string | null;
+  summary: string | null;
+  message_ids: string[];
+  created_at: string;
+}
+
+export interface Pattern {
+  id: string;
+  workspace_id: string;
+  type: PatternType;
+  label: string | null;
+  source_node_id: string;
+  target_node_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface CrossThreadLink {
+  id: string;
+  workspace_id: string;
+  from_node_id: string;
+  to_node_id: string;
+  link_type: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+export interface ContextItem {
+  id: string;
+  workspace_id: string;
+  node_id: string | null;
+  type: ContextItemType;
+  title: string | null;
+  content: string;
+  source_url: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
 // Supabase Database type for typed client
 export interface Database {
   public: {
@@ -186,6 +255,26 @@ export interface Database {
         Row: Output;
         Insert: Omit<Output, 'id' | 'created_at'> & { id?: string; created_at?: string };
         Update: Partial<Omit<Output, 'id'>>;
+      };
+      node_iterations: {
+        Row: NodeIteration;
+        Insert: Omit<NodeIteration, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<NodeIteration, 'id'>>;
+      };
+      patterns: {
+        Row: Pattern;
+        Insert: Omit<Pattern, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<Pattern, 'id'>>;
+      };
+      cross_thread_links: {
+        Row: CrossThreadLink;
+        Insert: Omit<CrossThreadLink, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<CrossThreadLink, 'id'>>;
+      };
+      context_items: {
+        Row: ContextItem;
+        Insert: Omit<ContextItem, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<ContextItem, 'id'>>;
       };
     };
   };

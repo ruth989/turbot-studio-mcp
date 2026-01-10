@@ -588,6 +588,190 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['workspaceId', 'concept'],
         },
       },
+      // === COMPANION APP FEATURES ===
+      {
+        name: 'turbot_thread_complete',
+        description: 'Mark a thread as complete, indicating the thinking session has concluded.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            threadId: {
+              type: 'string',
+              description: 'The thread ID to mark complete',
+            },
+          },
+          required: ['threadId'],
+        },
+      },
+      {
+        name: 'turbot_node_headline',
+        description: 'Set a short headline/title for a node to summarize its key point.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            nodeId: {
+              type: 'string',
+              description: 'The node ID',
+            },
+            headline: {
+              type: 'string',
+              description: 'Short headline (max 100 chars)',
+            },
+          },
+          required: ['nodeId', 'headline'],
+        },
+      },
+      {
+        name: 'turbot_node_stage',
+        description: 'Tag a node with its pipeline stage in the Double Diamond methodology.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            nodeId: {
+              type: 'string',
+              description: 'The node ID',
+            },
+            stage: {
+              type: 'string',
+              enum: ['insights', 'personas', 'vision', 'problems', 'journeys', 'concepting', 'definition', 'handoff'],
+              description: 'Pipeline stage',
+            },
+          },
+          required: ['nodeId', 'stage'],
+        },
+      },
+      {
+        name: 'turbot_pattern_create',
+        description: 'Create a structural pattern between nodes (fork, loop, bridge, join). Forks diverge exploration, loops return to earlier points, bridges connect across threads, joins converge branches.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            workspaceId: {
+              type: 'string',
+              description: 'The workspace ID',
+            },
+            type: {
+              type: 'string',
+              enum: ['fork', 'bridge', 'loop', 'join', 'iteration', 'sidebar', 'link'],
+              description: 'Pattern type',
+            },
+            sourceNodeId: {
+              type: 'string',
+              description: 'Source node ID',
+            },
+            targetNodeId: {
+              type: 'string',
+              description: 'Target node ID (optional for some patterns)',
+            },
+            label: {
+              type: 'string',
+              description: 'Optional label for the pattern',
+            },
+          },
+          required: ['workspaceId', 'type', 'sourceNodeId'],
+        },
+      },
+      {
+        name: 'turbot_iteration_create',
+        description: 'Create a new iteration of a node, preserving version history. Use when refining or evolving a thought.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            nodeId: {
+              type: 'string',
+              description: 'The node ID to iterate on',
+            },
+            headline: {
+              type: 'string',
+              description: 'Updated headline for this iteration',
+            },
+            summary: {
+              type: 'string',
+              description: 'Updated summary for this iteration',
+            },
+          },
+          required: ['nodeId'],
+        },
+      },
+      {
+        name: 'turbot_link_nodes',
+        description: 'Create a link between two nodes, optionally across different threads. Use for connecting related thoughts.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            workspaceId: {
+              type: 'string',
+              description: 'The workspace ID',
+            },
+            fromNodeId: {
+              type: 'string',
+              description: 'Source node ID',
+            },
+            toNodeId: {
+              type: 'string',
+              description: 'Target node ID',
+            },
+            linkType: {
+              type: 'string',
+              description: 'Type of link (e.g., "supports", "contradicts", "builds_on", "related")',
+            },
+            description: {
+              type: 'string',
+              description: 'Optional description of the relationship',
+            },
+          },
+          required: ['workspaceId', 'fromNodeId', 'toNodeId'],
+        },
+      },
+      {
+        name: 'turbot_context_add',
+        description: 'Add contextual information to the workspace or a specific node. Use for external references, quotes, links, or supporting documentation.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            workspaceId: {
+              type: 'string',
+              description: 'The workspace ID',
+            },
+            nodeId: {
+              type: 'string',
+              description: 'Optional: attach to a specific node',
+            },
+            type: {
+              type: 'string',
+              enum: ['quote', 'reference', 'link', 'document', 'note'],
+              description: 'Type of context item',
+            },
+            title: {
+              type: 'string',
+              description: 'Title or label',
+            },
+            content: {
+              type: 'string',
+              description: 'The content or description',
+            },
+            sourceUrl: {
+              type: 'string',
+              description: 'Optional source URL',
+            },
+          },
+          required: ['workspaceId', 'type', 'content'],
+        },
+      },
+      {
+        name: 'turbot_thread_view',
+        description: 'Get complete thread data including nodes, patterns, links, and context for visualization.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            threadId: {
+              type: 'string',
+              description: 'The thread ID',
+            },
+          },
+          required: ['threadId'],
+        },
+      },
     ],
   };
 });
@@ -723,6 +907,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         .select('id, name')
         .eq('workspace_id', workspaceId);
 
+      // Get patterns
+      const { data: patterns } = await supabase
+        .from('patterns')
+        .select('id, type')
+        .eq('workspace_id', workspaceId);
+
+      // Get cross-thread links
+      const { data: links } = await supabase
+        .from('cross_thread_links')
+        .select('id')
+        .eq('workspace_id', workspaceId);
+
       // Build pipeline status
       // Pipeline: Research → Personas → Vision → Problems → Journeys → Concepts → Definition → Outputs
       const hasInsights = thoughtProducts?.some((tp) => tp.type === 'insight') || false;
@@ -828,11 +1024,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         suggestions += '2. Organize findings with turbot_notebook_create (e.g., "Research Notes", "Decision Log")\n';
       }
 
+      // Patterns summary
+      const patternCount = patterns?.length || 0;
+      const patternsByType: Record<string, number> = {};
+      for (const p of patterns || []) {
+        patternsByType[p.type] = (patternsByType[p.type] || 0) + 1;
+      }
+      const patternsSummary = patternCount > 0
+        ? `\n\n## Patterns\n${Object.entries(patternsByType).map(([t, c]) => `  ${t}: ${c}`).join('\n')}`
+        : '';
+
       return {
         content: [
           {
             type: 'text',
-            text: `## Pipeline Status\n${pipelineViz}\n\n## Summary\nThought Products: ${thoughtProducts.length} | Personas: ${personas?.length || 0} | Outputs: ${outputs?.length || 0} | Notebooks: ${notebooks?.length || 0}\n\n## By Type\n${typeList}\n\n## By State\n${stateList}${established}${assumptions}${evidenceSummary}${notebooksSummary}${suggestions}`,
+            text: `## Pipeline Status\n${pipelineViz}\n\n## Summary\nThought Products: ${thoughtProducts.length} | Personas: ${personas?.length || 0} | Outputs: ${outputs?.length || 0} | Notebooks: ${notebooks?.length || 0} | Patterns: ${patternCount} | Links: ${links?.length || 0}\n\n## By Type\n${typeList}\n\n## By State\n${stateList}${established}${assumptions}${evidenceSummary}${notebooksSummary}${patternsSummary}${suggestions}`,
           },
         ],
       };
@@ -2368,6 +2574,332 @@ ${OUTPUT_TEMPLATES.adept}`;
           {
             type: 'text',
             text: `${evaluation}\n\n---\nEvaluation saved. Output ID: ${output?.id || 'not saved'}`,
+          },
+        ],
+      };
+    }
+
+    // === COMPANION APP FEATURES ===
+
+    case 'turbot_thread_complete': {
+      const { threadId } = args as { threadId: string };
+
+      const { data, error } = await supabase
+        .from('threads')
+        .update({ state: 'complete' })
+        .eq('id', threadId)
+        .select()
+        .single();
+
+      if (error) {
+        return { content: [{ type: 'text', text: `Error completing thread: ${error.message}` }] };
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Thread "${data.title || threadId}" marked as complete.`,
+          },
+        ],
+      };
+    }
+
+    case 'turbot_node_headline': {
+      const { nodeId, headline } = args as { nodeId: string; headline: string };
+
+      const truncatedHeadline = headline.substring(0, 100);
+      const { data, error } = await supabase
+        .from('nodes')
+        .update({ headline: truncatedHeadline })
+        .eq('id', nodeId)
+        .select()
+        .single();
+
+      if (error) {
+        return { content: [{ type: 'text', text: `Error setting headline: ${error.message}` }] };
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Headline set for node ${nodeId}: "${truncatedHeadline}"`,
+          },
+        ],
+      };
+    }
+
+    case 'turbot_node_stage': {
+      const { nodeId, stage } = args as { nodeId: string; stage: string };
+
+      const { data, error } = await supabase
+        .from('nodes')
+        .update({ stage })
+        .eq('id', nodeId)
+        .select()
+        .single();
+
+      if (error) {
+        return { content: [{ type: 'text', text: `Error setting stage: ${error.message}` }] };
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Node ${nodeId} tagged with stage: ${stage}`,
+          },
+        ],
+      };
+    }
+
+    case 'turbot_pattern_create': {
+      const { workspaceId, type, sourceNodeId, targetNodeId, label } = args as {
+        workspaceId: string;
+        type: string;
+        sourceNodeId: string;
+        targetNodeId?: string;
+        label?: string;
+      };
+
+      const { data, error } = await supabase
+        .from('patterns')
+        .insert({
+          workspace_id: workspaceId,
+          type,
+          source_node_id: sourceNodeId,
+          target_node_id: targetNodeId || null,
+          label: label || null,
+          metadata: {},
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return { content: [{ type: 'text', text: `Error creating pattern: ${error.message}` }] };
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Created ${type} pattern${label ? ` "${label}"` : ''}\nFrom: ${sourceNodeId}${targetNodeId ? `\nTo: ${targetNodeId}` : ''}\nPattern ID: ${data.id}`,
+          },
+        ],
+      };
+    }
+
+    case 'turbot_iteration_create': {
+      const { nodeId, headline, summary } = args as {
+        nodeId: string;
+        headline?: string;
+        summary?: string;
+      };
+
+      // Get current max version for this node
+      const { data: existingIterations } = await supabase
+        .from('node_iterations')
+        .select('version')
+        .eq('node_id', nodeId)
+        .order('version', { ascending: false })
+        .limit(1);
+
+      const nextVersion = existingIterations && existingIterations.length > 0
+        ? existingIterations[0].version + 1
+        : 1;
+
+      // Get current node state if this is first iteration
+      const { data: currentNode } = await supabase
+        .from('nodes')
+        .select('headline, summary, message_ids')
+        .eq('id', nodeId)
+        .single();
+
+      // Create the iteration
+      const { data, error } = await supabase
+        .from('node_iterations')
+        .insert({
+          node_id: nodeId,
+          version: nextVersion,
+          headline: headline || currentNode?.headline || null,
+          summary: summary || currentNode?.summary || null,
+          message_ids: currentNode?.message_ids || [],
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return { content: [{ type: 'text', text: `Error creating iteration: ${error.message}` }] };
+      }
+
+      // Update the node with new values if provided
+      if (headline || summary) {
+        await supabase
+          .from('nodes')
+          .update({
+            ...(headline && { headline }),
+            ...(summary && { summary }),
+          })
+          .eq('id', nodeId);
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Created iteration v${nextVersion} for node ${nodeId}\nIteration ID: ${data.id}`,
+          },
+        ],
+      };
+    }
+
+    case 'turbot_link_nodes': {
+      const { workspaceId, fromNodeId, toNodeId, linkType, description } = args as {
+        workspaceId: string;
+        fromNodeId: string;
+        toNodeId: string;
+        linkType?: string;
+        description?: string;
+      };
+
+      const { data, error } = await supabase
+        .from('cross_thread_links')
+        .insert({
+          workspace_id: workspaceId,
+          from_node_id: fromNodeId,
+          to_node_id: toNodeId,
+          link_type: linkType || null,
+          description: description || null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          return { content: [{ type: 'text', text: `Link already exists between these nodes.` }] };
+        }
+        return { content: [{ type: 'text', text: `Error creating link: ${error.message}` }] };
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Linked nodes${linkType ? ` (${linkType})` : ''}\nFrom: ${fromNodeId}\nTo: ${toNodeId}\nLink ID: ${data.id}`,
+          },
+        ],
+      };
+    }
+
+    case 'turbot_context_add': {
+      const { workspaceId, nodeId, type, title, content, sourceUrl } = args as {
+        workspaceId: string;
+        nodeId?: string;
+        type: string;
+        title?: string;
+        content: string;
+        sourceUrl?: string;
+      };
+
+      const { data, error } = await supabase
+        .from('context_items')
+        .insert({
+          workspace_id: workspaceId,
+          node_id: nodeId || null,
+          type,
+          title: title || null,
+          content,
+          source_url: sourceUrl || null,
+          metadata: {},
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return { content: [{ type: 'text', text: `Error adding context: ${error.message}` }] };
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Added ${type}${title ? `: "${title}"` : ''}\nContext ID: ${data.id}${nodeId ? `\nAttached to node: ${nodeId}` : ''}`,
+          },
+        ],
+      };
+    }
+
+    case 'turbot_thread_view': {
+      const { threadId } = args as { threadId: string };
+
+      // Get thread with all related data
+      const { data: thread, error: threadError } = await supabase
+        .from('threads')
+        .select('*')
+        .eq('id', threadId)
+        .single();
+
+      if (threadError) {
+        return { content: [{ type: 'text', text: `Error fetching thread: ${threadError.message}` }] };
+      }
+
+      // Get nodes
+      const { data: nodes } = await supabase
+        .from('nodes')
+        .select('*')
+        .eq('thread_id', threadId)
+        .order('position', { ascending: true });
+
+      // Get patterns for nodes in this thread
+      const nodeIds = nodes?.map(n => n.id) || [];
+      const { data: patterns } = await supabase
+        .from('patterns')
+        .select('*')
+        .eq('workspace_id', thread.workspace_id)
+        .or(`source_node_id.in.(${nodeIds.join(',')}),target_node_id.in.(${nodeIds.join(',')})`);
+
+      // Get cross-thread links
+      const { data: links } = await supabase
+        .from('cross_thread_links')
+        .select('*')
+        .eq('workspace_id', thread.workspace_id)
+        .or(`from_node_id.in.(${nodeIds.join(',')}),to_node_id.in.(${nodeIds.join(',')})`);
+
+      // Get thought products from nodes
+      const { data: thoughtProducts } = await supabase
+        .from('thought_products')
+        .select('*')
+        .in('source_node_id', nodeIds);
+
+      // Get context items
+      const { data: contextItems } = await supabase
+        .from('context_items')
+        .select('*')
+        .or(`node_id.in.(${nodeIds.join(',')}),workspace_id.eq.${thread.workspace_id}`);
+
+      // Get iterations for all nodes
+      const { data: iterations } = await supabase
+        .from('node_iterations')
+        .select('*')
+        .in('node_id', nodeIds)
+        .order('version', { ascending: false });
+
+      const result = {
+        thread,
+        nodes: nodes || [],
+        patterns: patterns || [],
+        links: links || [],
+        thoughtProducts: thoughtProducts || [],
+        contextItems: contextItems || [],
+        iterations: iterations || [],
+      };
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
           },
         ],
       };
