@@ -7,7 +7,7 @@ An MCP (Model Context Protocol) server that brings Double Diamond design thinkin
 Turbot exposes design thinking tools to Claude Desktop, Claude Code, and other MCP-compatible clients:
 
 - **Structured Thinking**: Apply methods like 5 Whys, SCAMPER, Jobs-to-be-Done, and How Might We
-- **Thought Products**: Capture and track insights, decisions, assumptions, tensions, and questions
+- **Thought Markers**: Capture and track insights, decisions, assumptions, tensions, and questions
 - **Evidence Grounding**: Link claims to supporting/challenging evidence with confidence scores
 - **Persona Simulation**: Validate ideas against user personas
 - **Output Generation**: Create specs, briefs, roadmaps, and other deliverables grounded in your research
@@ -82,7 +82,7 @@ Restart Claude Desktop.
 | Tool | Description |
 |------|-------------|
 | `turbot_think` | Start a thinking session with optional method (5whys, scamper, jobs_to_be_done, etc.) |
-| `turbot_capture` | Manually capture a thought product (insight, decision, assumption, etc.) |
+| `turbot_capture` | Manually capture a thought marker (insight, decision, assumption, etc.) |
 | `turbot_mode` | Get methodology guidance for current context |
 
 ### Workspace Management
@@ -97,10 +97,10 @@ Restart Claude Desktop.
 | Tool | Description |
 |------|-------------|
 | `turbot_ground` | Check what supports or challenges a claim |
-| `turbot_evidence` | Add evidence to a thought product |
-| `turbot_trace` | Trace lineage of a thought product |
-| `turbot_link` | Connect related thought products |
-| `turbot_update_state` | Update thought product state (validated, challenged, etc.) |
+| `turbot_evidence` | Add evidence to a thought marker |
+| `turbot_trace` | Trace lineage of a thought marker |
+| `turbot_link` | Connect related thought markers |
+| `turbot_update_state` | Update thought marker state (validated, challenged, etc.) |
 
 ### Personas & Simulation
 | Tool | Description |
@@ -118,14 +118,14 @@ Restart Claude Desktop.
 ### Search & Discovery
 | Tool | Description |
 |------|-------------|
-| `turbot_thought_list` | List thought products with filters |
+| `turbot_thought_list` | List thought markers with filters |
 | `turbot_search` | Search across all content |
 
 ### Notebooks
 | Tool | Description |
 |------|-------------|
 | `turbot_notebook_create` | Create a notebook for organizing thoughts |
-| `turbot_notebook_add` | Add thought products to notebook |
+| `turbot_notebook_add` | Add thought markers to notebook |
 | `turbot_notebook_list` | List notebooks |
 | `turbot_notebook_view` | View notebook contents |
 | `turbot_notebook_note` | Add freeform notes |

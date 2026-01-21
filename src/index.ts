@@ -30,7 +30,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_think',
         description:
-          'Start or continue a thinking session. Optionally apply a specific method (5whys, scamper, jobs_to_be_done, etc.). Returns AI response, creates a Node, and extracts ThoughtProducts.',
+          'Start or continue a thinking session. Optionally apply a specific method (5whys, scamper, jobs_to_be_done, etc.). Returns AI response, creates a Node, and extracts thought markers.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -70,7 +70,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'turbot_capture',
-        description: 'Manually capture a thought product (insight, decision, assumption, etc.)',
+        description: 'Manually capture a thought marker (insight, decision, assumption, etc.)',
         inputSchema: {
           type: 'object',
           properties: {
@@ -91,11 +91,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 'tension',
                 'principle',
               ],
-              description: 'The type of thought product',
+              description: 'The type of thought marker',
             },
             content: {
               type: 'string',
-              description: 'The content of the thought product',
+              description: 'The content of the thought marker',
             },
             nodeId: {
               type: 'string',
@@ -145,7 +145,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_ground',
         description:
-          'Check what supports or challenges a claim based on existing thought products and evidence in the workspace.',
+          'Check what supports or challenges a claim based on existing thought markers and evidence in the workspace.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -163,13 +163,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'turbot_trace',
-        description: 'Trace the lineage of a thought product - see what influenced it and what it influences.',
+        description: 'Trace the lineage of a thought marker - see what influenced it and what it influences.',
         inputSchema: {
           type: 'object',
           properties: {
             thoughtProductId: {
               type: 'string',
-              description: 'The thought product ID to trace',
+              description: 'The thought marker ID to trace',
             },
           },
           required: ['thoughtProductId'],
@@ -249,7 +249,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_evidence',
         description:
-          'Add supporting or challenging evidence to a thought product.',
+          'Add supporting or challenging evidence to a thought marker.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -259,7 +259,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             thoughtProductId: {
               type: 'string',
-              description: 'The thought product to attach evidence to',
+              description: 'The thought marker to attach evidence to',
             },
             type: {
               type: 'string',
@@ -276,7 +276,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             supports: {
               type: 'boolean',
-              description: 'true if this supports the thought product, false if it challenges it',
+              description: 'true if this supports the thought marker, false if it challenges it',
             },
           },
           required: ['workspaceId', 'thoughtProductId', 'type', 'content', 'supports'],
@@ -285,13 +285,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_update_state',
         description:
-          'Update the state of a thought product (e.g., from surfaced to validated, or to challenged).',
+          'Update the state of a thought marker (e.g., from surfaced to validated, or to challenged).',
         inputSchema: {
           type: 'object',
           properties: {
             thoughtProductId: {
               type: 'string',
-              description: 'The thought product ID to update',
+              description: 'The thought marker ID to update',
             },
             state: {
               type: 'string',
@@ -313,17 +313,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_link',
         description:
-          'Create an influence link between two thought products.',
+          'Create an influence link between two thought markers.',
         inputSchema: {
           type: 'object',
           properties: {
             fromId: {
               type: 'string',
-              description: 'The thought product that influences',
+              description: 'The thought marker that influences',
             },
             toId: {
               type: 'string',
-              description: 'The thought product that is influenced',
+              description: 'The thought marker that is influenced',
             },
           },
           required: ['fromId', 'toId'],
@@ -332,7 +332,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_notebook_create',
         description:
-          'Create a notebook for organizing thought products (e.g., Research Notes, Decision Log, Assumption Register).',
+          'Create a notebook for organizing thought markers (e.g., Research Notes, Decision Log, Assumption Register).',
         inputSchema: {
           type: 'object',
           properties: {
@@ -355,7 +355,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_notebook_add',
         description:
-          'Add a thought product (insight, decision, etc.) to a notebook. Use turbot_thought_list to find thought product IDs.',
+          'Add a thought marker (insight, decision, etc.) to a notebook. Use turbot_thought_list to find thought marker IDs.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -365,11 +365,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             thoughtProductId: {
               type: 'string',
-              description: 'The thought product ID to add',
+              description: 'The thought marker ID to add',
             },
             annotation: {
               type: 'string',
-              description: 'Optional note about why this TP is in this notebook',
+              description: 'Optional note about why this TM is in this notebook',
             },
           },
           required: ['notebookId', 'thoughtProductId'],
@@ -393,7 +393,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_notebook_view',
         description:
-          'View the contents of a notebook including all its thought products.',
+          'View the contents of a notebook including all its thought markers.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -442,7 +442,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_thought_list',
         description:
-          'List thought products in a workspace. Filter by type (insight, idea, claim, assumption, decision, question, tension, principle) or state (surfaced, validated, challenged, etc.).',
+          'List thought markers in a workspace. Filter by type (insight, idea, claim, assumption, decision, question, tension, principle) or state (surfaced, validated, challenged, etc.).',
         inputSchema: {
           type: 'object',
           properties: {
@@ -453,7 +453,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             type: {
               type: 'string',
               enum: ['insight', 'pattern', 'idea', 'claim', 'assumption', 'decision', 'question', 'tension', 'principle'],
-              description: 'Filter by thought product type',
+              description: 'Filter by thought marker type',
             },
             state: {
               type: 'string',
@@ -491,7 +491,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_search',
         description:
-          'Search thought products by keyword. Returns matching insights, decisions, assumptions, etc.',
+          'Search thought markers by keyword. Returns matching insights, decisions, assumptions, etc.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -514,7 +514,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'turbot_notebook_remove',
         description:
-          'Remove a thought product from a notebook.',
+          'Remove a thought marker from a notebook.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -524,7 +524,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             thoughtProductId: {
               type: 'string',
-              description: 'The thought product ID to remove',
+              description: 'The thought marker ID to remove',
             },
           },
           required: ['notebookId', 'thoughtProductId'],
